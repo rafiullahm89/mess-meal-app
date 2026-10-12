@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Meal Management System - Fixed & Custom Rates</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #2980b9;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --light-bg: #f8f9fa;
+            --border-color: #bdc3c7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 15px;
+            color: #333;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #fff;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+        .input-group input, .input-group select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #1f618d;
+        }
+        .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #219653; }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #a93226; }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 550px;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .member-name-input {
+            width: 110px;
+            padding: 3px;
+        }
+        .meal-input {
+            width: 32px;
+            text-align: center;
+            padding: 2px;
+        }
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .text-success { color: var(--success-color); font-weight: bold; }
+        .text-danger { color: var(--danger-color); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>মেস মিল ও খরচ ব্যবস্থাপনা সিস্টেম</h1>
+
+    <!-- সেটিংস ও রেট সেকশন -->
+    <div class="section">
+        <h2>১. রেট ও সেটিংস কনফিগারেশন</h2>
+        <div class="settings-grid">
+            <div class="input-group">
+                <label>প্রতিদিন মিল সিস্টেম</label>
+                <select id="mealTypeSystem" onchange="onSystemChange()">
+                    <option value="2">২ বেলা (দুপুর + রাত)</option>
+                    <option value="3">৩ বেলা (সকাল + দুপুর + রাত)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>রেটের ধরন</label>
+                <select id="rateType" onchange="toggleRateInputs()">
+                    <option value="separate">আলাদা আলাদা রেট</option>
+                    <option value="fixed">ফিক্সড মিল রেট</option>
+                </select>
+            </div>
+            <!-- আলাদা রেটের অপশন -->
+            <div class="input-group" id="breakfastGroup" style="display:none;">
+                <label>সকালের মিল রেট (টাকা)</label>
+                <input type="number" id="breakfastRate" value="30" onchange="calculateAll()">
+            </div>
+            <div class="input-group" id="lunchGroup">
+                <label>দুপুরের মিল রেট (টাকা)</label>
+                <input type="number" id="lunchRate" value="75" onchange="calculateAll()">
+            </div>
+            <div class="input-group" id="dinnerGroup">
+                <label>রাতের মিল রেট (টাকা)</label>
+                <input type="number" id="dinnerRate" value="45" onchange="calculateAll()">
+            </div>
+            <!-- ফিক্সড রেটের অপশন -->
+            <div class="input-group" id="fixedRateGroup" style="display:none;">
+                <label>প্রতি মিল ফিক্সড রেট (টাকা)</label>
+                <input type="number" id="fixedRate" value="50" onchange="calculateAll()">
+            </div>
+            <div class="input-group">
+                <label>সিট ভাড়া (টাকা)</label>
+                <input type="number" id="seatRent" value="2000" onchange="calculateAll()">
+            </div>
+            <div class="input-group">
+                <label>সদস্য সংখ্যা</label>
+                <input type="number" id="memberCount" value="5" min="1" max="30" onchange="updateMemberRows()">
+            </div>
+        </div>
+    </div>
+
+    <!-- মেম্বার ও দৈনিক মিল এন্ট্রি সেকশন -->
+    <div class="section">
+        <h2>২. সদস্যের তথ্য ও দৈনিক মিল এন্ট্রি (১ - ৩১ তারিখ)</h2>
+        <div class="table-container">
+            <table id="mealTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2">ক্র: নং</th>
+                        <th rowspan="2">সদস্যের নাম</th>
+                        <th rowspan="2">জমা (টাকা)</th>
+                        <th colspan="31" id="daysHeader">তারিখ (১ - ৩১)</th>
+                        <th rowspan="2" id="thBf">সকাল মিল</th>
+                        <th rowspan="2">দুপুর মিল</th>
+                        <th rowspan="2">রাত মিল</th>
+                        <th rowspan="2">মোট মিল</th>
+                        <th rowspan="2">খাবার খরচ</th>
+                        <th rowspan="2">সিট ভাড়া</th>
+                        <th rowspan="2">মোট খরচ</th>
+                        <th rowspan="2">ফাইনাল হিসাব (স্ট্যাটাস)</th>
+                    </tr>
+                    <tr id="subDaysHeader"></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="actions">
+            <button class="btn-success" onclick="saveData()">ডাটা সেভ করুন</button>
+            <button class="btn-danger" onclick="resetDataButton()">সব মুছে ফেলুন</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const maxDays = 31;
+    let membersData = [];
+
+    window.onload = function() {
+        loadData();
+    };
+
+    function onSystemChange() {
+        const sys = document.getElementById('mealTypeSystem').value;
+        const bfGroup = document.getElementById('breakfastGroup');
+        const thBf = document.getElementById('thBf');
+
+        if(sys === "3") {
+            if(document.getElementById('rateType').value === 'separate') {
+                bfGroup.style.display = "flex";
+            }
+            thBf.style.display = "table-cell";
+        } else {
+            bfGroup.style.display = "none";
+            thBf.style.display = "none";
+        }
+        updateMemberRows();
+    }
+
+    function toggleRateInputs() {
+        const rateType = document.getElementById('rateType').value;
+        const sys = document.getElementById('mealTypeSystem').value;
+        const bfGroup = document.getElementById('breakfastGroup');
+        const lunchGroup = document.getElementById('lunchGroup');
+        const dinnerGroup = document.getElementById('dinnerGroup');
+        const fixedGroup = document.getElementById('fixedRateGroup');
+
+        if(rateType === 'fixed') {
+            bfGroup.style.display = "none";
+            lunchGroup.style.display = "none";
+            dinnerGroup.style.display = "none";
+            fixedGroup.style.display = "flex";
+        } else {
+            fixedGroup.style.display = "none";
+            lunchGroup.style.display = "flex";
+            dinnerGroup.style.display = "flex";
+            if(sys === "3") {
+                bfGroup.style.display = "flex";
+            }
+        }
+        calculateAll();
+    }
+
+    function updateMemberRows() {
+        const count = parseInt(document.getElementById('memberCount').value) || 0;
+        const sys = parseInt(document.getElementById('mealTypeSystem').value) || 2;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        createDaysHeader();
+
+        for(let i=0; i<count; i++) {
+            let slotsPerDay = sys; 
+            let totalSlotsNeeded = maxDays * slotsPerDay;
+
+            let member = membersData[i] || {
+                name: `সদস্য ${i+1}`,
+                deposit: 2500,
+                meals: Array(totalSlotsNeeded).fill(1)
+            };
+
+            if(member.meals.length !== totalSlotsNeeded) {
+                let newMeals = Array(totalSlotsNeeded).fill(1);
+                for(let k=0; k<Math.min(member.meals.length, totalSlotsNeeded); k++) {
+                    newMeals[k] = member.meals[k];
+                }
+                member.meals = newMeals;
+            }
+            membersData[i] = member;
+
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td><input type="text" class="member-name-input" value="${member.name}" oninput="membersData[${i}].name = this.value"></td>
+                <td><input type="number" style="width: 75px;" value="${member.deposit}" oninput="membersData[${i}].deposit = parseFloat(this.value)||0; calculateAll()"></td>
+                ${generateMealInputs(i, member.meals, sys)}
+                <td id="totBf_${i}" style="${sys === 3 ? '' : 'display:none;'}">0</td>
+                <td id="totLunch_${i}">0</td>
+                <td id="totDinner_${i}">0</td>
+                <td id="totMeal_${i}">0</td>
+                <td id="mealCost_${i}">0 ৳</td>
+                <td id="rent_${i}">0 ৳</td>
+                <td id="totalCost_${i}">0 ৳</td>
+                <td id="netBalance_${i}">0 ৳</td>
+            `;
+            tbody.appendChild(tr);
+        }
+        calculateAll();
+    }
+
+    function createDaysHeader() {
+        const sys = parseInt(document.getElementById('mealTypeSystem').value) || 2;
+        const headerTr = document.getElementById('daysHeader');
+        headerTr.innerHTML = `<th colspan="${maxDays}">তারিখ অনুযায়ী মিল এন্ট্রি (${sys} বেলা সিস্টেম - কমা দিয়ে মান দিন যেমন: ${sys===3?'1,1,1':'1,1'})</th>`;
+
+        const subHeaderTr = document.getElementById('subDaysHeader');
+        let subHtml = '';
+        for(let i=1; i<=maxDays; i++) {
+            subHtml += `<th>তারিখ ${i}</th>`;
+        }
+        subHeaderTr.innerHTML = subHtml;
+    }
+
+    function generateMealInputs(memberIndex, meals, sys) {
+        let html = '';
+        for(let day=0; day<maxDays; day++) {
+            let startIndex = day * sys;
+            let valText = "";
+            if(sys === 2) {
+                let l = meals[startIndex] !== undefined ? meals[startIndex] : 0;
+                let d = meals[startIndex+1] !== undefined ? meals[startIndex+1] : 0;
+                valText = `${l},${d}`; 
+            } else {
+                let b = meals[startIndex] !== undefined ? meals[startIndex] : 0;
+                let l = meals[startIndex+1] !== undefined ? meals[startIndex+1] : 0;
+                let d = meals[startIndex+2] !== undefined ? meals[startIndex+2] : 0;
+                valText = `${b},${l},${d}`; 
+            }
+
+            html += `<td><input type="text" class="meal-input" value="${valText}" oninput="parseAndUpdateMeal(${memberIndex}, ${day}, this.value, ${sys})"></td>`;
+        }
+        return html;
+    }
+
+    function parseAndUpdateMeal(memberIndex, dayIndex, textVal, sys) {
+        let parts = textVal.split(',').map(v => parseFloat(v.trim()) || 0);
+        let startIndex = dayIndex * sys;
+        for(let s=0; s<sys; s++) {
+            membersData[memberIndex].meals[startIndex + s] = parts[s] !== undefined ? parts[s] : 0;
+        }
+        calculateAll();
+    }
+
+    function calculateAll() {
+        const sys = parseInt(document.getElementById('mealTypeSystem').value) || 2;
+        const rateType = document.getElementById('rateType').value;
+        const seatRent = parseFloat(document.getElementById('seatRent').value) || 0;
+
+        let bfRate = parseFloat(document.getElementById('breakfastRate').value) || 0;
+        let lunchRate = parseFloat(document.getElementById('lunchRate').value) || 0;
+        let dinnerRate = parseFloat(document.getElementById('dinnerRate').value) || 0;
+        let fixedRate = parseFloat(document.getElementById('fixedRate').value) || 0;
+
+        membersData.forEach((member, i) => {
+            let totBf = 0, totLunch = 0, totDinner = 0;
+
+            member.meals.forEach((m, idx) => {
+                let mod = idx % sys;
+                if(sys === 3) {
+                    if(mod === 0) totBf += m;
+                    else if(mod === 1) totLunch += m;
+                    else if(mod === 2) totDinner += m;
+                } else {
+                    if(mod === 0) totLunch += m;
+                    else if(mod === 1) totDinner += m;
+                }
+            });
+
+            let totalMeals = totBf + totLunch + totDinner;
+            let foodCost = 0;
+
+            if(rateType === 'fixed') {
+                foodCost = totalMeals * fixedRate;
+            } else {
+                if(sys === 3) {
+                    foodCost = (totBf * bfRate) + (totLunch * lunchRate) + (totDinner * dinnerRate);
+                } else {
+                    foodCost = (totLunch * lunchRate) + (totDinner * dinnerRate);
+                }
+            }
+
+            let totalCost = foodCost + seatRent;
+            let netBalance = member.deposit - totalCost;
+
+            if(sys === 3) {
+                document.getElementById(`totBf_${i}`).innerText = totBf;
+            }
+            document.getElementById(`totLunch_${i}`).innerText = totLunch;
+            document.getElementById(`totDinner_${i}`).innerText = totDinner;
+            document.getElementById(`totMeal_${i}`).innerText = totalMeals;
+            document.getElementById(`mealCost_${i}`).innerText = foodCost.toFixed(1) + " ৳";
+            document.getElementById(`rent_${i}`).innerText = seatRent + " ৳";
+            document.getElementById(`totalCost_${i}`).innerText = totalCost.toFixed(1) + " ৳";
+
+            let balanceCell = document.getElementById(`netBalance_${i}`);
+            if(netBalance >= 0) {
+                balanceCell.innerHTML = `<span class="text-success">রিফান্ড: ${netBalance.toFixed(1)} ৳</span>`;
+            } else {
+                balanceCell.innerHTML = `<span class="text-danger">দেনা: ${Math.abs(netBalance).toFixed(1)} ৳</span>`;
+            }
+        });
+    }
+
+    function saveData() {
+        const settings = {
+            mealTypeSystem: document.getElementById('mealTypeSystem').value,
+            rateType: document.getElementById('rateType').value,
+            breakfastRate: document.getElementById('breakfastRate').value,
+            lunchRate: document.getElementById('lunchRate').value,
+            dinnerRate: document.getElementById('dinnerRate').value,
+            fixedRate: document.getElementById('fixedRate').value,
+            seatRent: document.getElementById('seatRent').value,
+            memberCount: document.getElementById('memberCount').value
+        };
+        localStorage.setItem('messSettingsV3', JSON.stringify(settings));
+        localStorage.setItem('messMembersV3', JSON.stringify(membersData));
+        alert('সফলভাবে সকল ডাটা সেভ করা হয়েছে!');
+    }
+
+    function loadData() {
+        const savedSettings = localStorage.getItem('messSettingsV3');
+        const savedMembers = localStorage.getItem('messMembersV3');
+
+        if(savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('mealTypeSystem').value = settings.mealTypeSystem || "2";
+            document.getElementById('rateType').value = settings.rateType || "separate";
+            document.getElementById('breakfastRate').value = settings.breakfastRate || 30;
+            document.getElementById('lunchRate').value = settings.lunchRate || 75;
+            document.getElementById('dinnerRate').value = settings.dinnerRate || 45;
+            document.getElementById('fixedRate').value = settings.fixedRate || 50;
+            document.getElementById('seatRent').value = settings.seatRent || 2000;
+            document.getElementById('memberCount').value = settings.memberCount || 5;
+        }
+
+        onSystemChange();
+        toggleRateInputs();
+
+        if(savedMembers) {
+            membersData = JSON.parse(savedMembers);
+            document.getElementById('memberCount').value = membersData.length;
+            updateMemberRows();
+        }
+    }
+
+    function resetDataButton() {
+        if(confirm('সব ডাটা মুছে ফেলতে চান?')) {
+            localStorage.removeItem('messSettingsV3');
+            localStorage.removeItem('messMembersV3');
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
